@@ -69,9 +69,9 @@
                   (if (and (not (leaf? v1)) (not (leaf? v2)))
                       (equal-trees$ v1 v2
                                     (lambda (car-res)
-                                      (equal-trees$ (cdr v1) (cdr v2)
+                                      (equal-trees$ (cdr tree1) (cdr tree2)
                                                     (lambda (cdr-res)
-                                                      (succ (cons (car-res cdr-res))))
+                                                      (succ (cons car-res cdr-res)))
                                                     fail))
                                     fail)
                       (fail (cons v1 v2)))))])))
