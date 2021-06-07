@@ -47,6 +47,7 @@
                 (lambda (res)
                   (cont (cons (car lst1) res)))))))
 
+
 ;;; Q1.2
 ; Signature: equal-trees$(tree1, tree2, succ, fail) 
 ; Type: [Tree * Tree * [Tree ->T1] * [Pair->T2] -> T1 U T2
@@ -54,27 +55,25 @@
 (define leaf? (lambda (x) (not (list? x))))
 (define equal-trees$ 
   (lambda (tree1 tree2 succ fail)
-    (cond
-      [(and (not (list? tree1)) (not (list? tree2))) (succ (cons tree1 tree2))]
-      [(and (empty? tree1) (not (empty? tree2))) (fail (cons '() (car tree2)))]
-      [(and (not (empty? tree1)) (empty? tree2)) (fail (cons (car tree1) '()))]
-      [(and (empty? tree1) (empty? tree2)) (succ '())]
-      [else (let ((v1 (car tree1))
-                  (v2 (car tree2)))
-              (if (and (leaf? v1) (leaf? v2))
-                  (equal-trees$ (cdr tree1) (cdr tree2)
-                                (lambda (rest-res)
-                                  (succ (cons (cons v1 v2) rest-res)))
-                                fail)
-                  (if (and (not (leaf? v1)) (not (leaf? v2)))
-                      (equal-trees$ v1 v2
-                                    (lambda (car-res)
-                                      (equal-trees$ (cdr tree1) (cdr tree2)
-                                                    (lambda (cdr-res)
-                                                      (succ (cons car-res cdr-res)))
-                                                    fail))
-                                    fail)
-                      (fail (cons v1 v2)))))])))
+    (cond [(and (leaf? tree1) (leaf? tree2))
+           (succ (cons tree1 tree2))]
+          [(and (empty? tree1) (empty? tree2))
+           (succ '())]
+          [(and (not (leaf? tree1)) (leaf? tree2))
+           (fail (cons tree1 tree2))]
+          [(and (leaf? tree1) (not (leaf? tree2)))
+           (fail (cons tree1 tree2))]
+          [else ;both nodes with leaves
+           (equal-trees$ (car tree1) (car tree2)
+                         (lambda (first-res) ;succ
+                           (equal-trees$ (cdr tree1) (cdr tree2)
+                                         (lambda (rest-res) ;succ
+                                           (succ (cons first-res rest-res)))
+                                         fail))
+                         fail)])))
+ 
+
+
 
 ;;; Q2a
 ; Signature: reduce1-lzl(reducer, init, lzl) 
@@ -82,9 +81,10 @@
 ; Purpose: Returns the reduced value of the given lazy list
 (define reduce1-lzl 
   (lambda (reducer init lzl)
-   #f ;@TODO
-  )
-)  
+   (if (empty-lzl? lzl)
+       init
+       (reduce1-lzl reducer (reducer init (head lzl)) (tail lzl)))))
+
 
 ;;; Q2b
 ; Signature: reduce2-lzl(reducer, init, lzl, n) 
@@ -92,9 +92,10 @@
 ; Purpose: Returns the reduced value of the first n items in the given lazy list
 (define reduce2-lzl 
   (lambda (reducer init lzl n)
-    #f ;@TODO
-  )
-)  
+    (if (or (= n 0) (empty-lzl? lzl))
+        init
+        (reduce2-lzl reducer (reducer init (head lzl)) (tail lzl) (- n 1)))))
+
 
 ;;; Q2c
 ; Signature: reduce3-lzl(reducer, init, lzl) 
@@ -102,9 +103,11 @@
 ; Purpose: Returns the reduced values of the given lazy list items as a lazy list
 (define reduce3-lzl 
   (lambda (reducer init lzl)
-    #f ;@TODO
-  )
-)  
+    (if (empty-lzl? lzl)
+        init
+        (let ([value (reducer init (head lzl))])
+          (cons-lzl value (lambda () (reduce3-lzl reducer value (tail lzl))))))))
+
  
 ;;; Q2e
 ; Signature: integers-steps-from(from,step) 
@@ -112,9 +115,15 @@
 ; Purpose: Returns a list of integers from 'from' with 'steps' jumps
 (define integers-steps-from
   (lambda (from step)
-    #f ; @TODO
-  )
-)
+    (let ([value (+ from step)])
+      (cons-lzl from (lambda () (integers-steps-from value step))))))
+
+
+(define map-lzl
+  (lambda (lzl)
+    (let ([next-lzl (tail lzl)])
+      (cons-lzl (* 8 (/ 1 (* (head lzl) (head next-lzl)))) (lambda () (map-lzl (tail next-lzl)))))))
+    
 
 ;;; Q2f
 ; Signature: generate-pi-approximations() 
@@ -122,7 +131,6 @@
 ; Purpose: Returns the approximations of pi as a lazy list
 (define generate-pi-approximations
   (lambda ()
-    #f ; @TODO
-   )
- )
-(equal-trees$ '(1 (2) (3 9)) '(7 (2) (3 5)) id id)
+    (letrec ([lzl-add-2 (integers-steps-from 1 2)]
+             [the-lzl (map-lzl lzl-add-2)])
+      (reduce3-lzl + 0 the-lzl))))
