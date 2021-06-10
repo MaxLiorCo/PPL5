@@ -1,7 +1,5 @@
 #lang racket
 
-(define id (lambda (x) x))
-
 (provide (all-defined-out))
 
 (define integers-from
@@ -131,6 +129,6 @@
 ; Purpose: Returns the approximations of pi as a lazy list
 (define generate-pi-approximations
   (lambda ()
-    (letrec ([lzl-add-2 (integers-steps-from 1 2)]
+    (let* ([lzl-add-2 (integers-steps-from 1 2)]
              [the-lzl (map-lzl lzl-add-2)])
       (reduce3-lzl + 0 the-lzl))))
